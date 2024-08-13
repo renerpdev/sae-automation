@@ -54,9 +54,6 @@ slack_token = os.getenv('SLACK_TOKEN')
 client = WebClient(token=slack_token)
 channel_id = os.getenv('CHANNEL_ID')
 
-# URL de la página
-session_id = os.getenv('SESSION_ID')
-
 def send_slack_message(message):
     url = 'https://slack.com/api/chat.postMessage'
     headers = {
@@ -78,23 +75,33 @@ def send_slack_message(message):
 
 # Función principal
 def check_page():
-    page_url = f"https://sae.corteelectoral.gub.uy/sae/agendarReserva/Paso1.xhtml;jsessionid={session_id}"
+    url_prefix = "https://sae.corteelectoral.gub.uy/sae/agendarReserva/Paso1.xhtml"
+    page_url = f"{url_prefix}?e=1&a=1&r=1"
     driver.get(page_url)
 
     try:
         # Esperar hasta que el botón esté presente y hacer clic en él
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 5)
         button = wait.until(EC.element_to_be_clickable((By.ID, "form:botonElegirHora")))
         button.click()
         logging.info("Botón 'Elegir día y hora' clickeado")
 
         # Verificar si se ha cargado una nueva página
         time.sleep(3)  # Esperar unos segundos para que la página cargue
-        if driver.current_url != page_url:
+        if not driver.current_url.startswith(url_prefix):
             send_slack_message(f"New page loaded: {driver.current_url}")
+            return True
     except Exception as e:
         logging.error("Error: %s", e)
 
+    return False
+
 while True:
-    check_page()
-    time.sleep(5)
+    first_page_loaded = check_page()
+    if first_page_loaded == True:
+        break
+    time.sleep(0)
+
+while True:
+    logging.info('Waiting for user input...')
+

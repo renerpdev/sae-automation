@@ -41,11 +41,8 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
    ```plaintext
    SLACK_TOKEN=your-slack-bot-token
    CHANNEL_ID=your-channel-id
-   SESSION_ID=session-id-here
    ```
    
-> **Note**: El valor de `SESSION_ID` se encuentra al final de la url de la página del SAE 
-
 ## Uso
 
 1. **Ejecutar el script de monitoreo**:
@@ -63,7 +60,7 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
 ## Notas
 
 - Asegúrate de tener configurado correctamente tu token de Slack y el ID del canal.
-- Puedes personalizar el intervalo de tiempo de monitoreo modificando el valor de `time.sleep(5)` en el script.
+- Puedes personalizar el intervalo de tiempo de monitoreo modificando el valor de `time.sleep(0)` en el script.
 
 ## Licencia
 
