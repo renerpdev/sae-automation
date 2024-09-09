@@ -60,6 +60,8 @@ user_id = os.getenv('ID')
 user_name = os.getenv('NAME')
 user_last_name = os.getenv('LAST_NAME')
 
+scheduled_time=os.getenv('SCHEDULED_TIME')
+
 def send_slack_message(message):
     url = 'https://slack.com/api/chat.postMessage'
     headers = {
@@ -105,7 +107,7 @@ def select_location():
 
 
         if driver.current_url.startswith(second_page_url):
-            send_slack_message(f"Second page loaded: {driver.current_url}")
+            send_slack_message("Se ha cargado la página 2")
             return True
     except Exception as e:
         logging.error("Error: %s", e)
@@ -130,7 +132,7 @@ def select_available_date():
         wait_until_browser_is_ready()
 
         if driver.current_url.startswith(third_page_url):
-            send_slack_message(f"Third page loaded: {driver.current_url}")
+            send_slack_message(f"Se se ha cargado la página 3: {driver.current_url}")
             return True
     except Exception as e:
         logging.error("Error al seleccionar la fecha o hacer clic en el botón: %s", e)
@@ -139,16 +141,33 @@ def select_available_date():
 
 # Función para ingresar datos del usuario y luego hacer click en el botón "Enviar"
 def enter_user_details_and_complete():
-    # TODO: NOT IMPLEMENTED YET
+    # TODO: NOT FULLY IMPLEMENTED YET
+    try:
+        # Esperar hasta que el campo de texto esté presente y sea clickeable
+        wait = WebDriverWait(driver, 10)
+        text_field = wait.until(EC.element_to_be_clickable((By.ID, "inputText")))
 
-    # Esperar hasta que el navegador haya terminado de cargar la página
-    wait_until_browser_is_ready()
+        # Limpiar el campo antes de ingresar el nuevo texto (opcional)
+        text_field.clear()
+
+        # Ingresar el texto en el campo
+        text_field.send_keys(text)
+        logging.info(f"Texto ingresado en el campo: {text}")
+
+        # Esperar hasta que el navegador haya terminado de cargar la página
+        wait_until_browser_is_ready()
+
+        if not driver.current_url.startswith(third_page_url):
+            send_slack_message(f"Se ha creado la cita en SAE correctamente")
+            return True
+    except Exception as e:
+            logging.error("Error al ingresar texto en el campo: %s", e)
 
     return False
 
-# Función que se ejecutará cada lunes a las 9:50 AM
+# Función que se ejecutará cada Lunes a la hora prevista
 def job():
-    logging.info("Iniciando el proceso programado para el lunes a las 9:50 AM.")
+    logging.info(f"Iniciando tarea programada para Lunes a las {scheduled_time}")
 
     # Página 1: Detalles y ubicación
     while True:
@@ -165,23 +184,30 @@ def job():
             break
         time.sleep(0)
 
+    times = 0
     # Página 3: Datos necesarios
     while True:
         logging.info('Ingresando los datos del usuario...')
         details_submitted = enter_user_details_and_complete()
         if details_submitted == True:
             break
-        else
-            logging.info('Waiting for user input...')
+        else:
+            times += 1
+        # Si se llegó al maximo de intentos, esperar que el usuario introduzca los datos manualmente
+        if times == 3:
+            logging.info('Esperando que el usuario ingrese los datos manualmente...')
 
-    logging.info('***CITA CREADA CORRECTAMENTE***')
 
+# Programar la tarea para que se ejecute los Lunes a la hora prevista
+if scheduled_time:
+    logging.info(f"Tarea programada para Lunes a las {scheduled_time}")
+    schedule.every().monday.at(scheduled_time).do(job)
 
-# Programar la tarea para que se ejecute los lunes a las 9:50 AM
-schedule.every().monday.at("09:50").do(job)
+    while True:
+        # Verificar si hay alguna tarea pendiente
+        schedule.run_pending()
+        time.sleep(1)  # Esperar 1 segundo antes de la siguiente verificación
+else:
+    job()
 
-while True:
-    # Verificar si hay alguna tarea pendiente
-    schedule.run_pending()
-    time.sleep(1)  # Esperar 1 segundo antes de la siguiente verificación
 

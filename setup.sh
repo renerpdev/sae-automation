@@ -18,12 +18,12 @@ npx @puppeteer/browsers install chromedriver@canary
 # Crear archivo .env si no existe
 if [ ! -f .env ]; then
     cat <<EOT >> .env
-SLACK_TOKEN=your-slack-bot-token
-CHANNEL_ID=your-channel-id
-SESSION_ID=session-id-here
-ID=your-personal-id
-NAME=your-name
-LAST_NAME="your-last-names"
+SLACK_TOKEN=token-de-slack
+CHANNEL_ID=id-canal-de-slack
+SCHEDULED_TIME="09:50"
+ID=tu-cedula-aca
+NAME=tu-nombre
+LAST_NAME="tus-apellidos"
 EOT
     echo "Archivo .env creado. Por favor, actualiza los valores de las variables de entorno."
 else
