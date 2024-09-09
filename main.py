@@ -3,6 +3,7 @@ import time
 import logging
 import json
 import requests
+import schedule
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -87,7 +88,7 @@ def check_page():
         logging.info("Botón 'Elegir día y hora' clickeado")
 
         # Verificar si se ha cargado una nueva página
-        time.sleep(3)  # Esperar unos segundos para que la página cargue
+        time.sleep(1)  # Esperar unos segundos para que la página cargue
         if not driver.current_url.startswith(url_prefix):
             send_slack_message(f"New page loaded: {driver.current_url}")
             return True
@@ -96,12 +97,25 @@ def check_page():
 
     return False
 
-while True:
-    first_page_loaded = check_page()
-    if first_page_loaded == True:
-        break
-    time.sleep(0)
+# Función que se ejecutará cada lunes a las 9:50 AM
+def job():
+    logging.info("Iniciando el proceso programado para el lunes a las 9:50 AM.")
+
+    while True:
+        first_page_loaded = check_page()
+        if first_page_loaded == True:
+            break
+        time.sleep(0)
+
+    while True:
+        logging.info('Waiting for user input...')
+
+
+# Programar la tarea para que se ejecute los lunes a las 9:50 AM
+schedule.every().monday.at("09:50").do(job)
 
 while True:
-    logging.info('Waiting for user input...')
+    # Verificar si hay alguna tarea pendiente
+    schedule.run_pending()
+    time.sleep(30)  # Esperar 30 segundos antes de la siguiente verificación
 

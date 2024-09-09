@@ -7,7 +7,7 @@ brew update
 brew install python3
 
 # Instalar las bibliotecas de Python necesarias
-pip3 install selenium slack_sdk python-dotenv requests
+pip3 install selenium slack_sdk python-dotenv requests schedule
 
 # Descargar Chrome Testing binary usando @puppeteer/browsers
 npx @puppeteer/browsers install chrome@canary

@@ -52,7 +52,8 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
    ```
 
    Este script:
-   - Accederá a la URL especificada.
+   - Creará una tarea programada para Lunes a las 9:50am _(modifica el código para cambiar este comportamiento)_
+   - Accederá a la URL especificada usando una instancia de Chrome. 
    - Intentará encontrar y hacer clic en el botón con ID `form:botonElegirHora`.
    - Verificará si se ha cargado una nueva página.
    - Enviará una notificación a Slack si se carga una nueva página.
