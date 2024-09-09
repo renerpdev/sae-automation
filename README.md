@@ -7,9 +7,10 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
 
 ## Requisitos
 
-- Python 3
-- pip (Python package installer)
-- Google Chrome
+- Laptop running MacOS
+- Python3
+- pip3 (Python package installer)
+- Google Chrome for testing
 - ChromeDriver
 
 ## Instalación
@@ -61,7 +62,8 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
 ## Notas
 
 - Asegúrate de tener configurado correctamente tu token de Slack y el ID del canal.
-- Puedes personalizar el intervalo de tiempo de monitoreo modificando el valor de `time.sleep(0)` en el script.
+- Puedes personalizar el intervalo de tiempo de monitoreo de cada página modificando el valor de `time.sleep(0)` en el script.
+- Puede cambiar la fecha de inicio, modificando el valor de `schedule.every().monday.at("09:50")`
 
 ## Licencia
 

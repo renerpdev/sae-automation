@@ -20,6 +20,10 @@ if [ ! -f .env ]; then
     cat <<EOT >> .env
 SLACK_TOKEN=your-slack-bot-token
 CHANNEL_ID=your-channel-id
+SESSION_ID=session-id-here
+ID=your-personal-id
+NAME=your-name
+LAST_NAME="your-last-names"
 EOT
     echo "Archivo .env creado. Por favor, actualiza los valores de las variables de entorno."
 else
