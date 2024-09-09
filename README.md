@@ -7,9 +7,10 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
 
 ## Requisitos
 
-- Python 3
-- pip (Python package installer)
-- Google Chrome
+- Laptop running MacOS
+- Python3
+- pip3 (Python package installer)
+- Google Chrome for testing
 - ChromeDriver
 
 ## Instalación
@@ -39,8 +40,12 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
    Abre el archivo `.env` y actualiza los valores:
 
    ```plaintext
-   SLACK_TOKEN=your-slack-bot-token
-   CHANNEL_ID=your-channel-id
+   SLACK_TOKEN=token-de-slack
+   CHANNEL_ID=id-canal-de-slack
+   SCHEDULED_TIME="09:50"
+   ID=tu-cedula-aca
+   NAME=tu-nombre
+   LAST_NAME="tus-apellidos"
    ```
    
 ## Uso
@@ -52,15 +57,20 @@ Este script monitorea la página web del Sistema de Agenda Electrónica (SAE), n
    ```
 
    Este script:
-   - Accederá a la URL especificada.
-   - Intentará encontrar y hacer clic en el botón con ID `form:botonElegirHora`.
-   - Verificará si se ha cargado una nueva página.
-   - Enviará una notificación a Slack si se carga una nueva página.
+   - Creará una tarea programada para Lunes a las 9:50am _(modifica el código para cambiar este comportamiento)_
+   - Accederá a la URL del SA usando una instancia de Chrome. 
+   - Para cada uno de los pasos (un total de 3) hará lo siguiente:
+     1. Completerá los datos necesarios para el paso actual.
+     2. Hará clic en el botón submit del formulario actual.
+     3. Verificará si se ha cargado una nueva página. De lo contrario, ejecuta nuevamente el paso **a)**
+     4. Enviará una notificación a Slack si se carga una nueva página.
 
 ## Notas
 
 - Asegúrate de tener configurado correctamente tu token de Slack y el ID del canal.
-- Puedes personalizar el intervalo de tiempo de monitoreo modificando el valor de `time.sleep(0)` en el script.
+- Puedes personalizar el intervalo de tiempo de monitoreo de cada página modificando el valor de `time.sleep(0)` en el script.
+- Puedes modificar la hora de inicio, cambiando el valor de `SCHEDULED_TIME` (el día es fijo para "lunes").
+- Puedes eliminar el valor de la variable de entorno `SCHEDULED_TIME` para hacer que la tarea se ejecute inmediatamente.
 
 ## Licencia
 

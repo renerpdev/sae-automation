@@ -3,6 +3,7 @@ import time
 import logging
 import json
 import requests
+import schedule
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -54,6 +55,13 @@ slack_token = os.getenv('SLACK_TOKEN')
 client = WebClient(token=slack_token)
 channel_id = os.getenv('CHANNEL_ID')
 
+# Datos del usuario
+user_id = os.getenv('ID')
+user_name = os.getenv('NAME')
+user_last_name = os.getenv('LAST_NAME')
+
+scheduled_time=os.getenv('SCHEDULED_TIME')
+
 def send_slack_message(message):
     url = 'https://slack.com/api/chat.postMessage'
     headers = {
@@ -73,10 +81,18 @@ def send_slack_message(message):
         logging.info('Failed to send message')
         logging.info(response.status_code, response.text)
 
-# Función principal
-def check_page():
-    url_prefix = "https://sae.corteelectoral.gub.uy/sae/agendarReserva/Paso1.xhtml"
-    page_url = f"{url_prefix}?e=1&a=1&r=1"
+first_page_url = "https://sae.corteelectoral.gub.uy/sae/agendarReserva/Paso1.xhtml"
+second_page_url = "https://sae.corteelectoral.gub.uy/sae/agendarReserva/Paso2.xhtml"
+third_page_url = "https://sae.corteelectoral.gub.uy/sae/agendarReserva/Paso3.xhtml"
+
+def wait_until_browser_is_ready():
+    while driver.execute_script("return document.readyState") != "complete":
+        logging.info("Esperando a que la página termine de cargar...")
+        time.sleep(0.5)  # Espera corta para no sobrecargar el sistema
+
+# Función para seleccionar una ubicación y luego hacer clic en el botón "Elegir día y hora"
+def select_location():
+    page_url = f"{first_page_url}?e=1&a=1&r=1"
     driver.get(page_url)
 
     try:
@@ -86,22 +102,112 @@ def check_page():
         button.click()
         logging.info("Botón 'Elegir día y hora' clickeado")
 
-        # Verificar si se ha cargado una nueva página
-        time.sleep(3)  # Esperar unos segundos para que la página cargue
-        if not driver.current_url.startswith(url_prefix):
-            send_slack_message(f"New page loaded: {driver.current_url}")
+        # Esperar hasta que el navegador haya terminado de cargar la página
+        wait_until_browser_is_ready()
+
+
+        if driver.current_url.startswith(second_page_url):
+            send_slack_message("Se ha cargado la página 2")
             return True
     except Exception as e:
         logging.error("Error: %s", e)
 
     return False
 
-while True:
-    first_page_loaded = check_page()
-    if first_page_loaded == True:
-        break
-    time.sleep(0)
+# Función para hacer clic en una fecha disponible y luego en el botón "Completar Datos"
+def select_available_date():
+    try:
+        # Esperar hasta que el elemento con el selector esté presente y hacer clic
+        wait = WebDriverWait(driver, 10)
+        available_date = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".ui-datepicker td.fechaFutura:not(.ui-datepicker-unselectable):not(.ui-state-disabled)")))
+        available_date.click()
+        logging.info("Fecha disponible clickeada")
 
-while True:
-    logging.info('Waiting for user input...')
+        # Esperar hasta que el botón 'Completar Datos' esté presente y hacer clic
+        complete_button = wait.until(EC.element_to_be_clickable((By.ID, "form:botonCompletarDatos")))
+        complete_button.click()
+        logging.info("Botón 'Completar Datos' clickeado")
+
+        # Esperar hasta que el navegador haya terminado de cargar la página
+        wait_until_browser_is_ready()
+
+        if driver.current_url.startswith(third_page_url):
+            send_slack_message(f"Se se ha cargado la página 3: {driver.current_url}")
+            return True
+    except Exception as e:
+        logging.error("Error al seleccionar la fecha o hacer clic en el botón: %s", e)
+
+    return False
+
+# Función para ingresar datos del usuario y luego hacer click en el botón "Enviar"
+def enter_user_details_and_complete():
+    # TODO: NOT FULLY IMPLEMENTED YET
+    try:
+        # Esperar hasta que el campo de texto esté presente y sea clickeable
+        wait = WebDriverWait(driver, 10)
+        text_field = wait.until(EC.element_to_be_clickable((By.ID, "inputText")))
+
+        # Limpiar el campo antes de ingresar el nuevo texto (opcional)
+        text_field.clear()
+
+        # Ingresar el texto en el campo
+        text_field.send_keys(text)
+        logging.info(f"Texto ingresado en el campo: {text}")
+
+        # Esperar hasta que el navegador haya terminado de cargar la página
+        wait_until_browser_is_ready()
+
+        if not driver.current_url.startswith(third_page_url):
+            send_slack_message(f"Se ha creado la cita en SAE correctamente")
+            return True
+    except Exception as e:
+            logging.error("Error al ingresar texto en el campo: %s", e)
+
+    return False
+
+# Función que se ejecutará cada Lunes a la hora prevista
+def job():
+    logging.info(f"Iniciando tarea programada para Lunes a las {scheduled_time}")
+
+    # Página 1: Detalles y ubicación
+    while True:
+        second_page_loaded = select_location()
+        if second_page_loaded == True:
+            break
+        time.sleep(0)
+
+    # Página 2: Día y hora
+    while True:
+        logging.info('Seleccionando día y hora para la cita...')
+        third_page_loaded = select_available_date()
+        if third_page_loaded == True:
+            break
+        time.sleep(0)
+
+    times = 0
+    # Página 3: Datos necesarios
+    while True:
+        logging.info('Ingresando los datos del usuario...')
+        details_submitted = enter_user_details_and_complete()
+        if details_submitted == True:
+            break
+        else:
+            times += 1
+        # Si se llegó al maximo de intentos, esperar que el usuario introduzca los datos manualmente
+        if times == 3:
+            logging.info('Esperando que el usuario ingrese los datos manualmente...')
+
+
+# Programar la tarea para que se ejecute los Lunes a la hora prevista
+if scheduled_time:
+    logging.info(f"Tarea programada para Lunes a las {scheduled_time}")
+    schedule.every().monday.at(scheduled_time).do(job)
+
+    while True:
+        # Verificar si hay alguna tarea pendiente
+        schedule.run_pending()
+        time.sleep(1)  # Esperar 1 segundo antes de la siguiente verificación
+else:
+    job()
+
 
